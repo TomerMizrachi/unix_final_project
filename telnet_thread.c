@@ -286,7 +286,7 @@ void *telnet()
     if ((s = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
         perror("socket");
-        return 1;
+        return NULL;
     }
     setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
 
@@ -297,29 +297,22 @@ void *telnet()
     if (bind(s, (struct sockaddr *) &addr, sizeof(addr)) < 0)
     {
         perror("bind");
-        return 1;
+        return NULL;
     }
 
     if (listen(s, 50) < 0)
     {
         perror("listen");
-        return 1;
+        return NULL;
     }
 
     printf("Listening on port %d\n", CLITEST_PORT);
     while ((x = accept(s, NULL, 0)))
     {
-#ifndef WIN32
             socklen_t len = sizeof(addr);
             if (getpeername(x, (struct sockaddr *) &addr, &len) >= 0)
                 printf(" * accepted connection from %s\n", inet_ntoa(addr.sin_addr));
         cli_loop(cli, x);
-        exit(0);
-#else
-        cli_loop(cli, x);
-        shutdown(x, SD_BOTH);
-        close(x);
-#endif
     }
 
     cli_done(cli);

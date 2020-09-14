@@ -1,3 +1,2 @@
 # unix_final_project
-jhfjhfghfhjgkf\
-kjlhnkjlhlk
+gcc myFileSystemMonitor.c -finstrument-functions -lpthread -lcli -o a.out
