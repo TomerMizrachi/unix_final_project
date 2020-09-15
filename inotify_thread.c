@@ -21,6 +21,7 @@ void* inotify( void *arg )
   struct tm tm = *localtime(&t);
   char months[] = {"Jan", "Feb", "Mar", "Apr", "May",
                        "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+  char temp_buf[256];
 
   /*creating the INOTIFY instance*/
   fd = inotify_init();
@@ -47,10 +48,12 @@ void* inotify( void *arg )
     struct inotify_event *event = ( struct inotify_event * ) &buffer[ i ];     
     if ( event->len ) {
         if ( event->mask & IN_ACCESS ) {
-            printf( "FILE ACCESSED: %s\nACCESS: READ\nTIME OF ACCESS: %02d %s %d: %02d:%02d\n", event->name, tm.tm_mday, months[tm.tm_mon], tm.tm_year + 1900,  tm.tm_hour, tm.tm_min);
+            bzero( temp_buf, 256 );
+            fprintf(temp_buf, "FILE ACCESSED: %s\nACCESS: READ\nTIME OF ACCESS: %02d %s %d: %02d:%02d\n", event->name, tm.tm_mday, months[tm.tm_mon], tm.tm_year + 1900,  tm.tm_hour, tm.tm_min);
           }
          else if ( event->mask & IN_MODIFY ) {
-            printf( "FILE ACCESSED: %s\nACCESS: WRITE\nTIME OF ACCESS: %02d %s %d: %02d:%02d\n", event->name, tm.tm_mday, months[tm.tm_mon], tm.tm_year + 1900,  tm.tm_hour, tm.tm_min);
+            bzero( temp_buf, 256 );
+            fprintf(temp_buf, "FILE ACCESSED: %s\nACCESS: WRITE\nTIME OF ACCESS: %02d %s %d: %02d:%02d\n", event->name, tm.tm_mday, months[tm.tm_mon], tm.tm_year + 1900,  tm.tm_hour, tm.tm_min);
           }
         } 
       i += EVENT_SIZE + event->len;
