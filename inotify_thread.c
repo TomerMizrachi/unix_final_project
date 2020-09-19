@@ -4,7 +4,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <sys/types.h>
-#include <linux/inotify.h>
+#include <sys/inotify.h>
 #include <time.h>
 
 #define EVENT_SIZE  ( sizeof (struct inotify_event) )
@@ -19,7 +19,7 @@ void* inotify( void *arg )
   char* dir_path = (char *) arg;
   time_t t = time(NULL);
   struct tm tm = *localtime(&t);
-  char months[] = {"Jan", "Feb", "Mar", "Apr", "May",
+  char months[12][4] = {"Jan", "Feb", "Mar", "Apr", "May",
                        "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
   char temp_buf[256];
 
@@ -49,11 +49,11 @@ void* inotify( void *arg )
     if ( event->len ) {
         if ( event->mask & IN_ACCESS ) {
             bzero( temp_buf, 256 );
-            fprintf(temp_buf, "FILE ACCESSED: %s\nACCESS: READ\nTIME OF ACCESS: %02d %s %d: %02d:%02d\n", event->name, tm.tm_mday, months[tm.tm_mon], tm.tm_year + 1900,  tm.tm_hour, tm.tm_min);
+            snprintf(temp_buf, sizeof(temp_buf), "FILE ACCESSED: %s\nACCESS: READ\nTIME OF ACCESS: %02d %s %d: %02d:%02d\n", event->name, tm.tm_mday, months[tm.tm_mon], tm.tm_year + 1900,  tm.tm_hour, tm.tm_min);
           }
          else if ( event->mask & IN_MODIFY ) {
             bzero( temp_buf, 256 );
-            fprintf(temp_buf, "FILE ACCESSED: %s\nACCESS: WRITE\nTIME OF ACCESS: %02d %s %d: %02d:%02d\n", event->name, tm.tm_mday, months[tm.tm_mon], tm.tm_year + 1900,  tm.tm_hour, tm.tm_min);
+            snprintf(temp_buf, sizeof(temp_buf), "FILE ACCESSED: %s\nACCESS: WRITE\nTIME OF ACCESS: %02d %s %d: %02d:%02d\n", event->name, tm.tm_mday, months[tm.tm_mon], tm.tm_year + 1900,  tm.tm_hour, tm.tm_min);
           }
         } 
       i += EVENT_SIZE + event->len;

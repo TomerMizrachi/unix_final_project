@@ -43,6 +43,7 @@ int main(int argc, char *argv[])
   char dir_path[100];
   pthread_t tid_telnet;
   pthread_t tid_inotify;
+  pthread_t tid_webserver;
 
   if (pthread_create(&tid_telnet, NULL, telnet, NULL))
 		return 1;
