@@ -19,6 +19,8 @@
 
 #define CLITEST_PORT                8000
 #define MODE_CONFIG_INT             10
+#define BT_BUF_SIZE 100
+
 
 #ifdef __GNUC__
 # define UNUSED(d) d __attribute__ ((unused))
@@ -77,6 +79,30 @@ int cmd_test(struct cli_def *cli, const char *command, char *argv[], int argc)
     for (i = 0; i < argc; i++)
         cli_print(cli, "        %s", argv[i]);
 
+    return CLI_OK;
+}
+int cmd_backtrace(struct cli_def *cli, const char *command, char *argv[], int argc)
+{
+    int j, nptrs;
+	void *buffer[BT_BUF_SIZE];
+	char **strings;
+
+	nptrs = backtrace(buffer, BT_BUF_SIZE);
+	cli_print(cli,"backtrace() returned %d addresses\n", nptrs);
+
+	/* The call backtrace_symbols_fd(buffer, nptrs, STDOUT_FILENO)
+	   would produce similar output to the following: */
+
+	strings = backtrace_symbols(buffer, nptrs);
+	if (strings == NULL) {
+		perror("backtrace_symbols");
+		exit(EXIT_FAILURE);
+	}
+
+	for (j = 0; j < nptrs; j++)
+		cli_print(cli,"%s\n", strings[j]);
+
+	free(strings);
     return CLI_OK;
 }
 
@@ -233,6 +259,8 @@ void *telnet()
     cli_set_idle_timeout_callback(cli, 60, idle_timeout); // 60 second idle timeout
     cli_register_command(cli, NULL, "test", cmd_test, PRIVILEGE_UNPRIVILEGED, MODE_EXEC, NULL);
 
+    cli_register_command(cli, NULL, "backtrace", cmd_backtrace, PRIVILEGE_UNPRIVILEGED, MODE_EXEC, NULL);
+
     cli_register_command(cli, NULL, "simple", NULL, PRIVILEGE_UNPRIVILEGED, MODE_EXEC, NULL);
 
     cli_register_command(cli, NULL, "simon", NULL, PRIVILEGE_UNPRIVILEGED, MODE_EXEC, NULL);
@@ -306,7 +334,7 @@ void *telnet()
         return NULL;
     }
 
-    printf("Listening on port %d\n", CLITEST_PORT);
+    printf("Telnet listening on port %d\n", CLITEST_PORT);
     while ((x = accept(s, NULL, 0)))
     {
             socklen_t len = sizeof(addr);
