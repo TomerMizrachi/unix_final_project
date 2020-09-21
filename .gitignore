@@ -1,3 +1,5 @@
 *.[oa]
 *.out
 *.json
+core
+*.h.swp
