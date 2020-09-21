@@ -18,6 +18,9 @@ int main(int argc, char *argv[])
   char target_ip[100];
   char* global_buffer;
 
+  FILE* fp = fopen("/var/www/html/index.html","w+");
+  fclose(fp);
+
   global_buffer = (char*)malloc(10*sizeof(char));
   strcat(global_buffer,"the list:\n");
 

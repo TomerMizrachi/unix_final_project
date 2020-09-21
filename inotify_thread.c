@@ -13,6 +13,22 @@
 #define EVENT_SIZE  ( sizeof (struct inotify_event) )
 #define EVENT_BUF_LEN     ( 1024 * ( EVENT_SIZE + 16 ) )
 
+void update_webserver(char* buf){
+  
+  char* tmp;
+  FILE* fp = fopen("/var/www/html/index.html","a+");
+  fprintf(fp,"<html><body>");
+  tmp = strtok(buf,"\n");
+  while (tmp != NULL)
+  {
+    fprintf(fp,"<li> %s </li>",tmp);
+    tmp = strtok(NULL, "\n");
+  }
+  
+  fprintf(fp, "</body></html>");
+  fclose(fp);
+}
+
 void* inotify( void *arg )
 {
   size_t size;
@@ -57,28 +73,22 @@ void* inotify( void *arg )
       if ( event->len ) {
         if ( event->mask & IN_ACCESS ) {
           bzero( temp_buf, 256 );
-          snprintf(temp_buf, sizeof(temp_buf), "FILE ACCESSED: %s\nACCESS: READ\nTIME OF ACCESS: %02d %s %d: %02d:%02d\n", event->name, tm.tm_mday, months[tm.tm_mon], tm.tm_year + 1900,  tm.tm_hour, tm.tm_min);
+          snprintf(temp_buf, sizeof(temp_buf), "\nFILE ACCESSED: %s\nACCESS: READ\nTIME OF ACCESS: %02d %s %d: %02d:%02d\n", event->name, tm.tm_mday, months[tm.tm_mon], tm.tm_year + 1900,  tm.tm_hour, tm.tm_min);
         } else if ( event->mask & IN_MODIFY ) {
           bzero( temp_buf, 256 );
-          snprintf(temp_buf, sizeof(temp_buf), "FILE ACCESSED: %s\nACCESS: WRITE\nTIME OF ACCESS: %02d %s %d: %02d:%02d\n", event->name, tm.tm_mday, months[tm.tm_mon], tm.tm_year + 1900,  tm.tm_hour, tm.tm_min);
+          snprintf(temp_buf, sizeof(temp_buf), "\nFILE ACCESSED: %s\nACCESS: WRITE\nTIME OF ACCESS: %02d %s %d: %02d:%02d\n", event->name, tm.tm_mday, months[tm.tm_mon], tm.tm_year + 1900,  tm.tm_hour, tm.tm_min);
         }
-        printf("%s", globalbuff);
-        printf("%ld %ld\n",strlen(globalbuff), strlen(temp_buf));
         size = strlen(globalbuff) + strlen(temp_buf);
-        printf("%ld\n",size);
+
         globalbuff = (char*)realloc(globalbuff, ++size);
-        printf("%ld %ld\n",strlen(globalbuff), strlen(temp_buf));
         
         strncat(globalbuff,temp_buf,sizeof(temp_buf));
-
-        printf("123");
-        printf("%s\n", globalbuff);
-        printf("123");
   
         update_webserver(globalbuff);
       }
       i += EVENT_SIZE + event->len;
     }
+    i = 0;
     // if (pthread_create(&tid_udp, NULL, udp, (void*)arg))
 		//   perror("pthred udp creation failed\n");
     // pthread_join(tid_udp, NULL);
