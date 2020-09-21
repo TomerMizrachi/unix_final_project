@@ -9,14 +9,7 @@
 #include <libcli.h> // and link with -lcli.
 #include "telnet_thread.c"
 #include "inotify_thread.c"
-#include "netcat_thread.c"
-
-
-
-void update_webserver(char* buf){
-  FILE* fp = fopen("/var/www/html/index.htmal","w");
-  fprintf(fp, "<html><body> %s </body></html>",buf);
-}
+#include "declerations.h"
 
 int main(int argc, char *argv[])
 {
@@ -25,15 +18,18 @@ int main(int argc, char *argv[])
   char target_ip[100];
   char* global_buffer;
 
+  global_buffer = (char*)malloc(10*sizeof(char));
+  strcat(global_buffer,"the list:\n");
+
   pthread_t tid_telnet;
   pthread_t tid_inotify;
-  pthread_t tid_udp;
+
+  struct args *arguments = (struct args *)malloc(sizeof(struct args));
+  arguments->buffer = global_buffer;
   
   if (pthread_create(&tid_telnet, NULL, telnet, NULL))
 		return 1;
   
-
-
   while ((opt = getopt(argc, argv, "d:i:")) != -1)
   {
     switch (opt)
@@ -41,23 +37,26 @@ int main(int argc, char *argv[])
     case 'd':
       memset(dir_path, '\0', sizeof(dir_path));
       strcat(dir_path, optarg);
-      if (pthread_create(&tid_inotify, NULL, inotify, (void*)dir_path))
-	    	return 1;
+      arguments->dir_path = dir_path;
+     
       break;
     case 'i':
       memset(target_ip, '\0', sizeof(target_ip));
       strcat(target_ip, optarg);
-      if (pthread_create(&tid_udp, NULL, udp, (void*)global_buffer))
-		    return 1;
+      arguments->ip_addr = target_ip;
+      // if (pthread_create(&tid_udp, NULL, udp, (void*)arguments))
+		  //   return 1;
       break;
     default:
       break;
     }
-      
+
   }
+  if (pthread_create(&tid_inotify, NULL, inotify, (void*)arguments))
+	 	return 1;
   pthread_join(tid_telnet, NULL);
   pthread_join(tid_inotify, NULL);
-  pthread_join(tid_udp, NULL);
-
+  free(arguments);
+  
   return 0;  
 }
