@@ -18,11 +18,9 @@ int main(int argc, char *argv[])
   char target_ip[100];
   char* global_buffer;
 
-  FILE* fp = fopen("/var/www/html/index.html","w+");
-  fclose(fp);
 
   global_buffer = (char*)malloc(10*sizeof(char));
-  strcat(global_buffer,"the list:\n");
+  strcat(global_buffer,"the list:");
 
   pthread_t tid_telnet;
   pthread_t tid_inotify;
@@ -41,24 +39,21 @@ int main(int argc, char *argv[])
       memset(dir_path, '\0', sizeof(dir_path));
       strcat(dir_path, optarg);
       arguments->dir_path = dir_path;
-     
       break;
     case 'i':
       memset(target_ip, '\0', sizeof(target_ip));
       strcat(target_ip, optarg);
       arguments->ip_addr = target_ip;
-      // if (pthread_create(&tid_udp, NULL, udp, (void*)arguments))
-		  //   return 1;
       break;
     default:
       break;
     }
-
   }
   if (pthread_create(&tid_inotify, NULL, inotify, (void*)arguments))
 	 	return 1;
   pthread_join(tid_telnet, NULL);
   pthread_join(tid_inotify, NULL);
+  free(global_buffer);
   free(arguments);
   
   return 0;  

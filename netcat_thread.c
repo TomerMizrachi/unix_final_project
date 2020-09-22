@@ -3,9 +3,11 @@
 #include <sys/types.h> 
 #include <arpa/inet.h> 
 #include <sys/socket.h> 
-#include<netinet/in.h> 
-#include<unistd.h> 
-#include<stdlib.h> 
+#include <netinet/in.h>
+#include <sys/wait.h> 
+#include <netdb.h>
+#include <unistd.h> 
+#include <stdlib.h> 
 #include "declerations.h"
 
 #define PORT 10000
@@ -16,12 +18,12 @@ void* udp( void *arg )
 {   
     char* buffer = ((struct args*)arg)->buffer;
     char* ip_addr = ((struct args*)arg)->ip_addr;
+
     int sockfd, n; 
     struct sockaddr_in servaddr; 
       
     // clear servaddr 
     bzero(&servaddr, sizeof(servaddr)); 
-    // servaddr.sin_addr.s_addr = htonl(ip_addr); 
     servaddr.sin_port = htons(PORT); 
     servaddr.sin_family = AF_INET; 
     if (inet_aton(ip_addr , &servaddr.sin_addr) == 0) 
@@ -36,14 +38,14 @@ void* udp( void *arg )
     // connect to server 
     if(connect(sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0) 
     { 
-        printf("\n Error : Connect Failed \n"); 
+        printf("\n Error : Connect Failed : there was no server to connect to \n"); 
     } 
-    printf("udp client connected");    
+    printf("udp client connected\n");    
 
-    if((n = send(sockfd, buffer, sizeof(buffer), 0)) < 0){
+    if((n = send(sockfd, buffer, strlen(buffer), 0)) < 0){
         printf("UDP sending ERROR");
     }
+    printf("udp client sent inotify information\n");
     // close the descriptor 
-    close(sockfd);    
-    
+    close(sockfd);   
 } 
