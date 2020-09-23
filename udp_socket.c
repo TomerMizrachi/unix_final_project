@@ -14,9 +14,9 @@
 // #define IP_ADDR 0x7f000001
   
 
-void* udp( void *arg ) 
+int udp( void *arg ) 
 {   
-    char* buffer = ((struct args*)arg)->buffer;
+    //char* buffer = ((struct args*)arg)->buffer;
     char* ip_addr = ((struct args*)arg)->ip_addr;
 
     int sockfd, n; 
@@ -36,16 +36,14 @@ void* udp( void *arg )
     sockfd = socket(AF_INET, SOCK_DGRAM, 0); 
   
     // connect to server 
-    if(connect(sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0) 
+    if(n = connect(sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0) 
     { 
         printf("\n Error : Connect Failed : there was no server to connect to \n"); 
-    } 
-    printf("udp client connected\n");    
+    }else if(n == 0){
 
-    if((n = send(sockfd, buffer, strlen(buffer), 0)) < 0){
-        printf("UDP sending ERROR");
+        printf("udp client connected port: %d. you can connect throw netcat with command: netcat -l -u -p 10000, to get inotify deatails.\n",PORT);    
     }
-    printf("udp client sent inotify information\n");
-    // close the descriptor 
-    close(sockfd);   
+     
+    return sockfd;
+     
 } 

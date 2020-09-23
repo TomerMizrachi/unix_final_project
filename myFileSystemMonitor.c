@@ -7,9 +7,26 @@
 #include <stdbool.h>
 #include <pthread.h> // and link with -lpthread
 #include <libcli.h> // and link with -lcli.
+#include "declerations.h"
+
+int socketfd = 0;
+int backtrace_flag = 0;
+
 #include "telnet_thread.c"
 #include "inotify_thread.c"
-#include "declerations.h"
+
+void  __attribute__ ((no_instrument_function))  __cyg_profile_func_enter (void *this_fn,
+                                         void *call_site)
+{
+        printf("Enter %d\n",++count);
+
+}
+
+void  __attribute__ ((no_instrument_function))  __cyg_profile_func_exit (void *this_fn,
+                                         void *call_site)
+{
+        printf("Exit cnt=%d\n",--count);
+}
 
 int main(int argc, char *argv[])
 {
@@ -44,6 +61,7 @@ int main(int argc, char *argv[])
       memset(target_ip, '\0', sizeof(target_ip));
       strcat(target_ip, optarg);
       arguments->ip_addr = target_ip;
+      socketfd = udp((void*)arguments);
       break;
     default:
       break;
@@ -55,6 +73,6 @@ int main(int argc, char *argv[])
   pthread_join(tid_inotify, NULL);
   free(global_buffer);
   free(arguments);
-  
+  close(socketfd);
   return 0;  
 }

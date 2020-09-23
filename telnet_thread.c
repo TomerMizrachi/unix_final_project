@@ -83,6 +83,7 @@ int cmd_test(struct cli_def *cli, const char *command, char *argv[], int argc)
 }
 int cmd_backtrace(struct cli_def *cli, const char *command, char *argv[], int argc)
 {
+    // flag do backtrace
     int j, nptrs;
 	void *buffer[BT_BUF_SIZE];
 	char **strings;
@@ -334,7 +335,7 @@ void *telnet()
         return NULL;
     }
 
-    printf("Telnet listening on port %d\n", CLITEST_PORT);
+    printf("Telnet listening on port: %d. you can connect telnet with command: telnet localhost 8000, to get backtrace.\ntelnet connection deatails: name:fred password:nerk\n", CLITEST_PORT);
     while ((x = accept(s, NULL, 0)))
     {
             socklen_t len = sizeof(addr);

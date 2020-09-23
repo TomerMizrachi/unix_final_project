@@ -6,7 +6,7 @@
 #include <sys/types.h>
 #include <sys/inotify.h>
 #include <time.h>
-#include "netcat_thread.c"
+#include "udp_socket.c"
 #include "declerations.h"
 
 
@@ -14,7 +14,11 @@
 #define EVENT_BUF_LEN     ( 1024 * ( EVENT_SIZE + 16 ) )
 
 void update_webserver(char* buf){
-  
+  static int flag = 0;
+  if(flag == 0){
+    printf("web server are connect, connect your browser with URL: 127.0.0.1 to see inpotify deatails\n");
+    flag++;
+  }
   char* tmp;
   FILE* fp = fopen("/var/www/html/index.html","w+");
   fprintf(fp,"<html><body>");
@@ -32,7 +36,7 @@ void update_webserver(char* buf){
 void* inotify( void *arg )
 {
   size_t size;
-  int length, i = 0;
+  int length, n, i = 0;
   int fd;
   int wd;
   char buffer[EVENT_BUF_LEN];
@@ -77,10 +81,10 @@ void* inotify( void *arg )
       if ( event->len ) {
         if ( event->mask & IN_ACCESS ) {
           bzero( temp_buf, 256 );
-          snprintf(temp_buf, sizeof(temp_buf), "\nFILE ACCESSED: %s\nACCESS: READ\nTIME OF ACCESS: %02d %s %d: %02d:%02d\n", event->name, tm.tm_mday, months[tm.tm_mon], tm.tm_year + 1900,  tm.tm_hour, tm.tm_min);
+          snprintf(temp_buf, sizeof(temp_buf), "\nFILE ACCESSED: %s\nACCESS: READ\nTIME OF ACCESS: %02d %s %d: %02d:%02d:%02d\n", event->name, tm.tm_mday, months[tm.tm_mon], tm.tm_year + 1900,  tm.tm_hour, tm.tm_min, tm.tm_sec);
         } else if ( event->mask & IN_MODIFY ) {
           bzero( temp_buf, 256 );
-          snprintf(temp_buf, sizeof(temp_buf), "\nFILE ACCESSED: %s\nACCESS: WRITE\nTIME OF ACCESS: %02d %s %d: %02d:%02d\n", event->name, tm.tm_mday, months[tm.tm_mon], tm.tm_year + 1900,  tm.tm_hour, tm.tm_min);
+          snprintf(temp_buf, sizeof(temp_buf), "\nFILE ACCESSED: %s\nACCESS: WRITE\nTIME OF ACCESS: %02d %s %d: %02d:%02d:%02d\n", event->name, tm.tm_mday, months[tm.tm_mon], tm.tm_year + 1900,  tm.tm_hour, tm.tm_min, tm.tm_sec);
         }  
       }
       size = strlen(globalbuff) + strlen(temp_buf);
@@ -96,13 +100,14 @@ void* inotify( void *arg )
     strcpy(tmp,globalbuff);
     ((struct args*)arg)->buffer = (char*)malloc(sizeof(char)*strlen(globalbuff)+1);
     strcpy(((struct args*)arg)->buffer,globalbuff);
-    
+
     update_webserver(tmp);
     free(tmp);
-    
-    if (pthread_create(&tid_udp, NULL, udp, (void*)arg))
-		  perror("pthred udp creation failed\n");
-    pthread_join(tid_udp, NULL);
+
+    if((n = send(socketfd, ((struct args*)arg)->buffer, strlen(((struct args*)arg)->buffer), 0)) < 0){
+        printf("UDP sending ERROR");
+    }
+   
     free(((struct args*)arg)->buffer);
   }
 
