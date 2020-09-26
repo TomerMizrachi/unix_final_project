@@ -7,10 +7,18 @@
 #include <stdbool.h>
 #include <pthread.h> // and link with -lpthread
 #include <libcli.h> // and link with -lcli.
+#include <semaphore.h>
 #include "declerations.h"
 
-int socketfd = 0;
+#define BT_BUF_SIZE 100
+
+sem_t sem; 
 int backtrace_flag = 0;
+int nptrs;
+void *buffer[BT_BUF_SIZE];
+char **strings;
+
+int socketfd = 0;
 
 #include "telnet_thread.c"
 #include "inotify_thread.c"
@@ -18,14 +26,26 @@ int backtrace_flag = 0;
 void  __attribute__ ((no_instrument_function))  __cyg_profile_func_enter (void *this_fn,
                                          void *call_site)
 {
-        printf("Enter %d\n",++count);
+  if(backtrace_flag == 1){
+    backtrace_flag =0;
+   
+  	nptrs = backtrace(buffer, BT_BUF_SIZE);
 
+	  strings = backtrace_symbols(buffer, nptrs);
+  	if (strings == NULL) {
+  		perror("backtrace_symbols");
+	  	exit(EXIT_FAILURE);
+	  }
+    sem_post(&sem);
+   
+  
+  }
 }
 
 void  __attribute__ ((no_instrument_function))  __cyg_profile_func_exit (void *this_fn,
                                          void *call_site)
 {
-        printf("Exit cnt=%d\n",--count);
+      
 }
 
 int main(int argc, char *argv[])
@@ -34,15 +54,26 @@ int main(int argc, char *argv[])
   char dir_path[100];
   char target_ip[100];
   char* global_buffer;
-
-
+  if (sem_init(&sem, 0, 0) == -1){
+    printf("sem_init failed\n");
+    return 1;
+  }
+    
   global_buffer = (char*)malloc(10*sizeof(char));
-  strcat(global_buffer,"the list:");
+  if(global_buffer == NULL){
+    printf("global_buffer malloc failed\n");
+    return 1;
+  }
+  strcat(global_buffer,"the inotify list:");
 
   pthread_t tid_telnet;
   pthread_t tid_inotify;
 
   struct args *arguments = (struct args *)malloc(sizeof(struct args));
+  if(arguments == NULL){
+    printf("arguments malloc failed\n");
+    return 1;
+  }
   arguments->buffer = global_buffer;
   
   if (pthread_create(&tid_telnet, NULL, telnet, NULL))

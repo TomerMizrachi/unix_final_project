@@ -10,13 +10,10 @@
 #include <stdlib.h> 
 #include "declerations.h"
 
-#define PORT 10000
-// #define IP_ADDR 0x7f000001
-  
+#define PORT 10000  
 
 int udp( void *arg ) 
 {   
-    //char* buffer = ((struct args*)arg)->buffer;
     char* ip_addr = ((struct args*)arg)->ip_addr;
 
     int sockfd, n; 
@@ -41,7 +38,7 @@ int udp( void *arg )
         printf("\n Error : Connect Failed : there was no server to connect to \n"); 
     }else if(n == 0){
 
-        printf("udp client connected port: %d. you can connect throw netcat with command: netcat -l -u -p 10000, to get inotify deatails.\n",PORT);    
+        printf("udp client connected ip: %s port: %d. you can connect netcat with command: netcat -l -u -p 10000, to get inotify deatails.\n",ip_addr,PORT);    
     }
      
     return sockfd;

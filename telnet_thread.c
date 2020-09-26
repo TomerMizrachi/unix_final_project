@@ -19,7 +19,6 @@
 
 #define CLITEST_PORT                8000
 #define MODE_CONFIG_INT             10
-#define BT_BUF_SIZE 100
 
 
 #ifdef __GNUC__
@@ -83,27 +82,16 @@ int cmd_test(struct cli_def *cli, const char *command, char *argv[], int argc)
 }
 int cmd_backtrace(struct cli_def *cli, const char *command, char *argv[], int argc)
 {
-    // flag do backtrace
-    int j, nptrs;
-	void *buffer[BT_BUF_SIZE];
-	char **strings;
+    backtrace_flag =1;
+    sem_wait(&sem);
 
-	nptrs = backtrace(buffer, BT_BUF_SIZE);
-	cli_print(cli,"backtrace() returned %d addresses\n", nptrs);
+  	cli_print(cli,"backtrace() returned %d addresses\n", nptrs);
 
-	/* The call backtrace_symbols_fd(buffer, nptrs, STDOUT_FILENO)
-	   would produce similar output to the following: */
+	for (int j = 0; j < nptrs; j++)
+	  cli_print(cli,"%s\n", strings[j]);
 
-	strings = backtrace_symbols(buffer, nptrs);
-	if (strings == NULL) {
-		perror("backtrace_symbols");
-		exit(EXIT_FAILURE);
-	}
+  	free(strings);
 
-	for (j = 0; j < nptrs; j++)
-		cli_print(cli,"%s\n", strings[j]);
-
-	free(strings);
     return CLI_OK;
 }
 
@@ -340,7 +328,7 @@ void *telnet()
     {
             socklen_t len = sizeof(addr);
             if (getpeername(x, (struct sockaddr *) &addr, &len) >= 0)
-                printf(" * accepted connection from %s\n", inet_ntoa(addr.sin_addr));
+                printf("telnet accepted connection from %s\n", inet_ntoa(addr.sin_addr));
         cli_loop(cli, x);
     }
 

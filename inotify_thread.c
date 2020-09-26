@@ -21,6 +21,10 @@ void update_webserver(char* buf){
   }
   char* tmp;
   FILE* fp = fopen("/var/www/html/index.html","w+");
+  if(fp == NULL){
+    printf("fopen in update_webserver function failed\n");
+    return;
+  }
   fprintf(fp,"<html><body>");
   tmp = strtok(buf,"\n");
   while (tmp != NULL)
@@ -97,15 +101,22 @@ void* inotify( void *arg )
     }
     i = 0;
     tmp = (char *)malloc(sizeof(char)*(strlen(globalbuff)+1));
+    if(tmp == NULL){
+      printf("in inotify thred tmp malloc failed\n");
+    }
     strcpy(tmp,globalbuff);
+
     ((struct args*)arg)->buffer = (char*)malloc(sizeof(char)*strlen(globalbuff)+1);
+    if(((struct args*)arg)->buffer == NULL){
+      printf("in inotify thred arg->buffer malloc failed\n");
+    }
     strcpy(((struct args*)arg)->buffer,globalbuff);
 
     update_webserver(tmp);
     free(tmp);
 
     if((n = send(socketfd, ((struct args*)arg)->buffer, strlen(((struct args*)arg)->buffer), 0)) < 0){
-        printf("UDP sending ERROR");
+        printf("UDP sending ERROR, please initilize netcat server, command: netcat -l -u -p 10000 \n");
     }
    
     free(((struct args*)arg)->buffer);
