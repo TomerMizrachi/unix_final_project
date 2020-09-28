@@ -36,9 +36,7 @@ void  __attribute__ ((no_instrument_function))  __cyg_profile_func_enter (void *
   		perror("backtrace_symbols");
 	  	exit(EXIT_FAILURE);
 	  }
-    sem_post(&sem);
-   
-  
+    sem_post(&sem);  
   }
 }
 
@@ -51,14 +49,16 @@ void  __attribute__ ((no_instrument_function))  __cyg_profile_func_exit (void *t
 int main(int argc, char *argv[])
 {
   char opt;
-  char dir_path[100];
-  char target_ip[100];
+  char dir_path[128];
+  char target_ip[128];
   char* global_buffer;
+  
+  // init semaphore for telnet backtrace command
   if (sem_init(&sem, 0, 0) == -1){
     printf("sem_init failed\n");
     return 1;
   }
-    
+  // allocate global buffer for storing inotify info  
   global_buffer = (char*)malloc(10*sizeof(char));
   if(global_buffer == NULL){
     printf("global_buffer malloc failed\n");
@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
 
   pthread_t tid_telnet;
   pthread_t tid_inotify;
-
+  // arguments to store inotify thread data
   struct args *arguments = (struct args *)malloc(sizeof(struct args));
   if(arguments == NULL){
     printf("arguments malloc failed\n");
@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
   }
   arguments->buffer = global_buffer;
   
-  if (pthread_create(&tid_telnet, NULL, telnet, NULL))
+  if (pthread_create(&tid_telnet, NULL, telnet, NULL)) // declared in telnet_thread.c
 		return 1;
   
   while ((opt = getopt(argc, argv, "d:i:")) != -1)
@@ -92,13 +92,13 @@ int main(int argc, char *argv[])
       memset(target_ip, '\0', sizeof(target_ip));
       strcat(target_ip, optarg);
       arguments->ip_addr = target_ip;
-      socketfd = udp((void*)arguments);
+      socketfd = udp((void*)arguments); // declared in udp_socket.c
       break;
     default:
       break;
     }
   }
-  if (pthread_create(&tid_inotify, NULL, inotify, (void*)arguments))
+  if (pthread_create(&tid_inotify, NULL, inotify, (void*)arguments)) // declared in inotify_thread.c
 	 	return 1;
   pthread_join(tid_telnet, NULL);
   pthread_join(tid_inotify, NULL);
