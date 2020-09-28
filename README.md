@@ -21,4 +21,5 @@ netcat -l -u -p 10000
 The program will listen with inotify (libcli) to the directory witch you will provide to the program with the argument -d
 
 The program support apache webserver and update the index.html with inotify dir information as required
+update webserver fonction declared in inotify_thread.c
 

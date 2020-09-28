@@ -28,14 +28,13 @@ void  __attribute__ ((no_instrument_function))  __cyg_profile_func_enter (void *
 {
   if(backtrace_flag == 1){
     backtrace_flag =0;
-   
   	nptrs = backtrace(buffer, BT_BUF_SIZE);
 
 	  strings = backtrace_symbols(buffer, nptrs);
   	if (strings == NULL) {
   		perror("backtrace_symbols");
 	  	exit(EXIT_FAILURE);
-	  }
+	  } 
     sem_post(&sem);  
   }
 }

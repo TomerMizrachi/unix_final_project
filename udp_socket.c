@@ -41,6 +41,6 @@ int udp( void *arg )
         printf("udp client connected ip: %s port: %d. you can connect netcat with command: netcat -l -u -p 10000, to get inotify deatails.\n",ip_addr,PORT);    
     }
      
-    return sockfd;
+    return sockfd; // will use when changes happend in dir to informe server
      
 } 

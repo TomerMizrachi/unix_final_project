@@ -13,6 +13,7 @@
 #define EVENT_SIZE  ( sizeof (struct inotify_event) )
 #define EVENT_BUF_LEN     ( 1024 * ( EVENT_SIZE + 16 ) )
 
+//index.html update
 void update_webserver(char* buf){
   static int flag = 0;
   if(flag == 0){
@@ -37,6 +38,7 @@ void update_webserver(char* buf){
   fclose(fp);
 }
 
+//inotify thread
 void* inotify( void *arg )
 {
   size_t size;
@@ -86,40 +88,52 @@ void* inotify( void *arg )
         if ( event->mask & IN_ACCESS ) {
           bzero( temp_buf, 256 );
           snprintf(temp_buf, sizeof(temp_buf), "\nFILE ACCESSED: %s\nACCESS: READ\nTIME OF ACCESS: %02d %s %d: %02d:%02d:%02d\n", event->name, tm.tm_mday, months[tm.tm_mon], tm.tm_year + 1900,  tm.tm_hour, tm.tm_min, tm.tm_sec);
+          size = strlen(globalbuff) + strlen(temp_buf);
+          globalbuff = (char *)realloc(globalbuff, size);
+          strcat(globalbuff,temp_buf);
+          tmp = (char *)malloc(sizeof(char)*(strlen(globalbuff)+1));
+          if(tmp == NULL){
+            printf("in inotify thred tmp malloc failed\n");
+          }
+          strcpy(tmp,globalbuff);
+          ((struct args*)arg)->buffer = (char*)malloc(sizeof(char)*strlen(globalbuff)+1);
+          if(((struct args*)arg)->buffer == NULL){
+            printf("in inotify thred arg->buffer malloc failed\n");
+          }
+          strcpy(((struct args*)arg)->buffer,globalbuff);
+          update_webserver(tmp);
+          free(tmp);
+          if((n = send(socketfd, ((struct args*)arg)->buffer, strlen(((struct args*)arg)->buffer), 0)) < 0){
+              printf("UDP sending ERROR, please initilize netcat server, command: netcat -l -u -p 10000 \n");
+          }
+          free(((struct args*)arg)->buffer);
         } else if ( event->mask & IN_MODIFY ) {
           bzero( temp_buf, 256 );
           snprintf(temp_buf, sizeof(temp_buf), "\nFILE ACCESSED: %s\nACCESS: WRITE\nTIME OF ACCESS: %02d %s %d: %02d:%02d:%02d\n", event->name, tm.tm_mday, months[tm.tm_mon], tm.tm_year + 1900,  tm.tm_hour, tm.tm_min, tm.tm_sec);
+          size = strlen(globalbuff) + strlen(temp_buf);
+          globalbuff = (char *)realloc(globalbuff, size);
+          strcat(globalbuff,temp_buf);
+          tmp = (char *)malloc(sizeof(char)*(strlen(globalbuff)+1));
+          if(tmp == NULL){
+            printf("in inotify thred tmp malloc failed\n");
+          }
+          strcpy(tmp,globalbuff);
+          ((struct args*)arg)->buffer = (char*)malloc(sizeof(char)*strlen(globalbuff)+1);
+          if(((struct args*)arg)->buffer == NULL){
+            printf("in inotify thred arg->buffer malloc failed\n");
+          }
+          strcpy(((struct args*)arg)->buffer,globalbuff);
+          update_webserver(tmp);
+          free(tmp);
+          if((n = send(socketfd, ((struct args*)arg)->buffer, strlen(((struct args*)arg)->buffer), 0)) < 0){
+            printf("UDP sending ERROR, please initilize netcat server, command: netcat -l -u -p 10000 \n");
+          }
+          free(((struct args*)arg)->buffer);
         }  
       }
-      size = strlen(globalbuff) + strlen(temp_buf);
-
-      globalbuff = (char *)realloc(globalbuff, size);
-        
-      strcat(globalbuff,temp_buf);
-  
       i += EVENT_SIZE + event->len;
     }
     i = 0;
-    tmp = (char *)malloc(sizeof(char)*(strlen(globalbuff)+1));
-    if(tmp == NULL){
-      printf("in inotify thred tmp malloc failed\n");
-    }
-    strcpy(tmp,globalbuff);
-
-    ((struct args*)arg)->buffer = (char*)malloc(sizeof(char)*strlen(globalbuff)+1);
-    if(((struct args*)arg)->buffer == NULL){
-      printf("in inotify thred arg->buffer malloc failed\n");
-    }
-    strcpy(((struct args*)arg)->buffer,globalbuff);
-
-    update_webserver(tmp);
-    free(tmp);
-
-    if((n = send(socketfd, ((struct args*)arg)->buffer, strlen(((struct args*)arg)->buffer), 0)) < 0){
-        printf("UDP sending ERROR, please initilize netcat server, command: netcat -l -u -p 10000 \n");
-    }
-   
-    free(((struct args*)arg)->buffer);
   }
 
   /*removing the “/tmp” directory from the watch list.*/
